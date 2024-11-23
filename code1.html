@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag to Goal with Defender</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #87ceeb; /* Sky blue background */
+            font-family: Arial, sans-serif;
+        }
+        #field {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background-color: #4caf50; /* Grass color */
+            border: 2px solid #fff;
+            overflow: hidden;
+        }
+        #ball {
+            position: absolute;
+            width: 50px; /* Ball size */
+            cursor: grab;
+            user-drag: none; /* Prevent dragging the image */
+        }
+        #goal {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            width: 100px;
+            height: 50px;
+            background-color: #fff;
+            border: 2px solid #ff5722; /* Goal color */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #defender {
+            position: absolute;
+            width: 50px; /* Defender size */
+            height: 50px;
+            background-color: #ff5722; /* Defender color */
+            border-radius: 50%; /* Circular defender */
+            transition: left 0.1s, top 0.1s; /* Smooth movement */
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: #fff;
+        }
+        #chances {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="field">
+        <div id="score">Score: 0</div>
+        <div id="chances">Chances: 3</div>
+        <img id="ball" src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Football.png" alt="Football">
+        <div id="goal"></div>
+        <div id="defender"></div>
+    </div>
+
+    <script>
+        const ball = document.getElementById('ball');
+        const scoreDisplay = document.getElementById('score');
+        const chancesDisplay = document.getElementById('chances');
+        const goal = document.getElementById('goal');
+        const defender = document.getElementById('defender');
+
+        let offsetX, offsetY, isDragging = false;
+        let score = 0;
+        let chances = 3;
+        const defenderSpeed = 0.2; // Slow speed for the defender
+
+        ball.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - ball.getBoundingClientRect().left;
+            offsetY = e.clientY - ball.getBoundingClientRect().top;
+            ball.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            ball.style.cursor = 'grab';
+            checkGoal();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                let newX = e.clientX - offsetX;
+                let newY = e.clientY - offsetY;
+
+                // Constrain the ball within the field
+                const fieldRect = field.getBoundingClientRect();
+                const ballRect = ball.getBoundingClientRect();
+
+                if (newX < fieldRect.left) newX = fieldRect.left;
+                if (newX + ballRect.width > fieldRect.right) newX = fieldRect.right - ballRect.width;
+                if (newY < fieldRect.top) newY = fieldRect.top;
+                if (newY + ballRect.height > fieldRect.bottom) newY = fieldRect.bottom - ballRect.height;
+
+                ball.style.left = `${newX - fieldRect.left}px`;
+                ball.style.top = `${newY - fieldRect.top}px`;
+            }
+        });
+
+        function checkGoal() {
+            const ballRect = ball.getBoundingClientRect();
+            const goalRect = goal.getBoundingClientRect();
+            if (
+                ballRect.left < goalRect.right &&
+                ballRect.right > goalRect.left &&
+                ballRect.top < goalRect.bottom &&
+                ballRect.bottom > goalRect.top
+            ) {
+                score++;
+                scoreDisplay.textContent = `Score: ${score}`;
+                resetBall();
+            }
+        }
+
+        function resetBall() {
+            ball.style.left = '20px';
+            ball.style.top = '50%';
+            ball.style.transform = 'translateY(-50%)';
+        }
+
+        function moveDefender() {
+            const ballRect = ball.getBoundingClientRect();
+            const defenderRect = defender.getBoundingClientRect();
+
+            // Move defender towards the ball
+            const dx = ballRect.left - defenderRect.left;
+            const dy = ballRect.top - defenderRect.top;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Normalize the movement
+            if (distance > 0) {
+                const moveX = (dx / distance) * defenderSpeed;
+                const moveY = (dy / distance) * defenderSpeed;
+
+                defender.style.left = `${defenderRect.left + moveX}px`;
+                defender.style.top = `${defenderRect.top + moveY}px`;
+            }
+
+            checkCollisionWithDefender();
+        }
+
+        function checkCollisionWithDefender() {
+            const ballRect = ball.getBoundingClientRect();
+            const defenderRect = defender.getBoundingClientRect();
+            if (
+                ballRect.left < defenderRect.right &&
+                ballRect.right > defenderRect.left &&
+                ballRect.top < defenderRect.bottom &&
+                ballRect.bottom > defenderRect.top
+            ) {
+                chances--;
+                chancesDisplay.textContent = `Chances: ${chances}`;
+                alert('The defender stole the ball!');
+
+                if (chances <= 0) {
+                    alert('Game Over! Your score: ' + score);
+                    resetGame();
+                } else {
+                    resetBall();
+                }
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            chances = 3;
+            scoreDisplay.textContent = `Score: ${score}`;
+            chancesDisplay.textContent = `Chances: ${chances}`;
+            resetBall();
+        }
+
+        // Update defender movement every 50ms
+        setInterval(moveDefender, 50);
+    </script>
+</body>
+</html>
