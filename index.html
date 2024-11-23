@@ -3,193 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drag to Goal with Defender</title>
+    <title>Me vs Myself - Game</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 50px;
+            font-size: 2.5em;
+        }
+        #intro {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            background-color: #87ceeb; /* Sky blue background */
-            font-family: Arial, sans-serif;
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+            background: linear-gradient(135deg, #4e54c8, #8f94fb);
         }
-        #field {
-            position: relative;
-            width: 800px;
-            height: 400px;
-            background-color: #4caf50; /* Grass color */
+        .level {
+            display: none;
+            margin: 20px;
+            padding: 20px;
+            border: 2px solid #ffcc00;
+            border-radius: 10px;
+            background: rgba(255, 204, 0, 0.1);
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            color: #222;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 10px;
+        }
+        .button:hover {
+            background-color: #ffd700;
+        }
+        #puzzle-container {
+            display: inline-block;
+            margin: 20px 0;
             border: 2px solid #fff;
-            overflow: hidden;
+            width: 200px; /* Fixed width for square */
+            height: 200px; /* Fixed height for square */
+            position: relative;
+            background-color: #222;
         }
-        #ball {
-            position: absolute;
-            width: 50px; /* Ball size */
-            cursor: grab;
-            user-drag: none; /* Prevent dragging the image */
-        }
-        #goal {
-            position: absolute;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-            width: 100px;
-            height: 50px;
-            background-color: #fff;
-            border: 2px solid #ff5722; /* Goal color */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-        #defender {
-            position: absolute;
-            width: 50px; /* Defender size */
-            height: 50px;
-            background-color: #ff5722; /* Defender color */
-            border-radius: 50%; /* Circular defender */
-            transition: left 0.1s, top 0.1s; /* Smooth movement */
-        }
-        #score {
-            position: absolute;
-            top: 10px;
-            left: 10px;
+        .puzzle-tile {
+            width: 66px; /* Adjusted for 3x3 grid */
+            height: 66px; /* Adjusted for 3x3 grid */
+            line-height: 66px;
+            border: 1px solid #fff;
+            display: inline-block;
             font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #333;
             color: #fff;
+            position: absolute; /* Absolute positioning for smooth animation */
         }
-        #chances {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 24px;
-            color: #fff;
+        .empty {
+            background-color: transparent;
+            cursor: default;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="field">
-        <div id="score">Score: 0</div>
-        <div id="chances">Chances: 3</div>
-        <img id="ball" src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Football.png" alt="Football">
-        <div id="goal"></div>
-        <div id="defender"></div>
-    </div>
 
-    <script>
-        const ball = document.getElementById('ball');
-        const scoreDisplay = document.getElementById('score');
-        const chancesDisplay = document.getElementById('chances');
-        const goal = document.getElementById('goal');
-        const defender = document.getElementById('defender');
+<div id="intro">
+    <h1>Welcome to the Realm of Challenges!</h1>
+    <p>Today, you will face your weaknesses and challenges. Are you ready?</p>
+    <button class="button" id="start-button">Start Your Journey</button>
+</div>
 
-        let offsetX, offsetY, isDragging = false;
-        let score = 0;
-        let chances = 3;
-        const defenderSpeed = 0.2; // Slow speed for the defender
+<div id="level-1" class="level">
+    <h2>Level 1: Spelling Bee</h2>
+    <p>Guess the tough words based on the clues provided. You will have 3 words to guess!</p>
+    <div id="word-hint"></div>
+    <input type="text" id="word-input" placeholder="Type your answer here...">
+    <button class="button" id="submit-word">Submit</button>
+    <div id="word-result"></div>
+    <button class="button" id="next-level-1" style="display:none;">Next Level</button>
+</div>
 
-        ball.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            offsetX = e.clientX - ball.getBoundingClientRect().left;
-            offsetY = e.clientY - ball.getBoundingClientRect().top;
-            ball.style.cursor = 'grabbing';
-        });
+<div id="level-2" class="level">
+    <h2>Level 2: Sliding Puzzle</h2>
+    <p>Arrange the numbers in the correct order in this 3x3 sliding puzzle!</p>
+    <div id="puzzle-container"></div>
+    <button class="button" id="next-level-2" style="display:none;">Next Level</button>
+</div>
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            ball.style.cursor = 'grab';
-            checkGoal();
-        });
+<div id="level-3" class="level">
+    <h2>Level 3: Football Challenge</h2>
+    <p>Guide the ball into the goal!</p>
+    <div id="football-field"></div>
+    <button class="button" id="next-level-3" style="display:none;">Next Level</button>
+</div>
 
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                let newX = e.clientX - offsetX;
-                let newY = e.clientY - offsetY;
+<div id="level-4" class="level">
+    <h2>Level 4: The Maze</h2>
+    <p>Navigate through the maze and collect checkpoints!</p>
+    <div id="maze-container"></div>
+    <button class="button" id="finish-button" style="display:none;">Finish</button>
+</div>
 
-                // Constrain the ball within the field
-                const fieldRect = field.getBoundingClientRect();
-                const ballRect = ball.getBoundingClientRect();
+<script>
+    // Level 1: Spelling Bee
+    const wordsWithHints = {
+        "CONUNDRUM": "A confusing and difficult problem or question.",
+        "QUINTESSENTIAL": "Representing the most perfect or typical example of a quality or class.",
+        "ASTRONAUT": "A person who is trained to travel in a spacecraft."
+    };
+    let currentWord = '';
+    let wordCount = 0;
 
-                if (newX < fieldRect.left) newX = fieldRect.left;
-                if (newX + ballRect.width > fieldRect.right) newX = fieldRect.right - ballRect.width;
-                if (newY < fieldRect.top) newY = fieldRect.top;
-                if (newY + ballRect.height > fieldRect.bottom) newY = fieldRect.bottom - ballRect.height;
+    document.getElementById('start-button').onclick = function() {
+        document.getElementById('intro').style.display = 'none';
+        document.getElementById('level-1').style.display = 'block';
+        startSpellingBee();
+    };
 
-                ball.style.left = `${newX - fieldRect.left}px`;
-                ball.style.top = `${newY - fieldRect.top}px`;
-            }
-        });
-
-        function checkGoal() {
-            const ballRect = ball.getBoundingClientRect();
-            const goalRect = goal.getBoundingClientRect();
-            if (
-                ballRect.left < goalRect.right &&
-                ballRect.right > goalRect.left &&
-                ballRect.top < goalRect.bottom &&
-                ballRect.bottom > goalRect.top
-            ) {
-                score++;
-                scoreDisplay.textContent = `Score: ${score}`;
-                resetBall();
-            }
-        }
-
-        function resetBall() {
-            ball.style.left = '20px';
-            ball.style.top = '50%';
-            ball.style.transform = 'translateY(-50%)';
-        }
-
-        function moveDefender() {
-            const ballRect = ball.getBoundingClientRect();
-            const defenderRect = defender.getBoundingClientRect();
-
-            // Move defender towards the ball
-            const dx = ballRect.left - defenderRect.left;
-            const dy = ballRect.top - defenderRect.top;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            // Normalize the movement
-            if (distance > 0) {
-                const moveX = (dx / distance) * defenderSpeed;
-                const moveY = (dy / distance) * defenderSpeed;
-
-                defender.style.left = `${defenderRect.left + moveX}px`;
-                defender.style.top = `${defenderRect.top + moveY}px`;
-            }
-
-            checkCollisionWithDefender();
-        }
-
-        function checkCollisionWithDefender() {
-            const ballRect = ball.getBoundingClientRect();
-            const defenderRect = defender.getBoundingClientRect();
-            if (
-                ballRect.left < defenderRect.right &&
-                ballRect.right > defenderRect.left &&
-                ballRect.top < defenderRect.bottom &&
-                ballRect.bottom > defenderRect.top
-            ) {
-                chances--;
-                chancesDisplay.textContent = `Chances: ${chances}`;
-                alert('The defender stole the ball!');
-
-                if (chances <= 0) {
-                    alert('Game Over! Your score: ' + score);
-                    resetGame();
+    function startSpellingBee() {
+        const keys = Object.keys(wordsWithHints);
+        currentWord = keys[Math.floor(Math.random() * keys.length)];
+        document.getElementById('word-hint').innerText = `Hint: ${wordsWithHints[currentWord]}`;
+        document.getElementById('submit-word').onclick = function() {
+            const input = document.getElementById('word-input').value.toUpperCase();
+            if (input === currentWord) {
+                wordCount++;
+                document.getElementById('word-result').innerText = `Correct! You guessed "${currentWord}".`;
+                document.getElementById('next-level-1').style.display = 'block';
+                if (wordCount < 3) {
+                    currentWord = keys[Math.floor(Math.random() * keys.length)];
+                    document.getElementById('word-hint').innerText = `Hint: ${wordsWithHints[currentWord]}`;
+                    document.getElementById('word-input').value = ''; // Clear input
                 } else {
-                    resetBall();
+                    document.getElementById('word-hint').innerText = 'You have completed this level!';
                 }
+            } else {
+                document.getElementById('word-result').innerText = `Incorrect! Try again.`;
             }
-        }
+        };
+    }
 
-        function resetGame() {
-            score = 0;
-            chances = 3;
-            scoreDisplay.textContent = `Score: ${score}`;
-            chancesDisplay.textContent = `Chances: ${chances}`;
-            resetBall();
-        }
+    document.getElementById('next-level-1').onclick = function() {
+        document.getElementById('level-1').style.display = 'none';
+        document.getElementById('level-2').style.display = 'block';
+        startSlidingPuzzle();
+    };
 
-        // Update defender movement every 50ms
-        setInterval(moveDefender, 50);
-    </script>
+    // Level 2: Sliding Puzzle
+    const puzzleContainer = document.getElementById('puzzle-container');
+    const numbers = [1, 2, 3, 4, 5, 6, 7, 8, ''];
+    let emptyIndex = 8; // Index of the empty space
+
+    function startSlidingPuzzle() {
+        shuffle(numbers); // Shuffle numbers for initial state
+        renderPuzzle();
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function renderPuzzle() {
+        puzzleContainer.innerHTML = ''; // Clear previous puzzle
+        numbers.forEach((num, index) => {
+            const tile = document.createElement('div');
+            tile.className = 'puzzle-tile' + (num === '' ? ' empty' : '');
+            tile.innerText = num;
+            tile.setAttribute('data-index', index);
+            const [row, col] = getRowCol(index);
+            tile.style.top = `${row * 66}px`; // Positioning for the tile
+            tile.style.left = `${col * 66}px`; // Positioning for the tile
+            tile.onclick = () => handleTileClick(index);
+            puzzleContainer.appendChild(tile);
+        });
+    }
+
+    function handleTileClick(index) {
+        const [row, col] = getRowCol(index);
+        const [emptyRow, emptyCol] = getRowCol(emptyIndex);
+
+        // Check if the clicked tile is adjacent to the empty space
+        if ((Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
+            (Math.abs(col - emptyCol) === 1 && row === emptyRow)) {
+            // Swap the clicked tile with the empty space
+            swapTiles(index);
+        }
+    }
+
+    function swapTiles(index) {
+        [numbers[emptyIndex], numbers[index]] = [numbers[index], numbers[emptyIndex]];
+        emptyIndex = index; // Update empty index
+        renderPuzzle(); // Re-render the puzzle
+        checkForWin(); // Check if the puzzle is solved
+    }
+
+    function getRowCol(index) {
+        return [Math.floor(index / 3), index % 3];
+    }
+
+    function checkForWin() {
+        if (numbers.join('') === '12345678') {
+            document.getElementById('next-level-2').style.display = 'block';
+            alert("Congratulations! You've solved the puzzle!");
+        }
+    }
+
+    // Start the sliding puzzle when the level is accessed
+    startSlidingPuzzle();
+
+    document.getElementById('next-level-2').onclick = function() {
+        document.getElementById('level-2').style.display = 'none';
+        document.getElementById('level-3').style.display = 'block';
+        startFootballChallenge();
+    };
+
+    // Level 3: Football Challenge (Placeholder)
+    function startFootballChallenge() {
+        const footballField = document.getElementById('football-field');
+        footballField.innerHTML = '<p>Football Game Placeholder - Add Your Logic Here!</p>';
+        // Implement game logic for guiding the ball to the goal
+        document.getElementById('next-level-3').onclick = function() {
+            document.getElementById('level-3').style.display = 'none';
+            document.getElementById('level-4').style.display = 'block';
+            startMaze();
+        };
+    }
+
+    // Level 4: The Maze (Placeholder)
+    function startMaze() {
+        const mazeContainer = document.getElementById('maze-container');
+        mazeContainer.innerHTML = '<p>Maze Game Placeholder - Add Your Logic Here!</p>';
+        // Implement maze navigation logic
+        document.getElementById('finish-button').onclick = function() {
+            document.getElementById('level-4').style.display = 'none';
+            alert("Congratulations! You've completed all levels!");
+            // Add motivational quote here
+        };
+    }
+</script>
+
 </body>
 </html>
